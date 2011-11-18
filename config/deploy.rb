@@ -51,11 +51,24 @@ def rollback_migrations
   if previous_release
     rollback_migrations = get_migrations(latest_release) - get_migrations(previous_release)
 
-    rollback_migrations.each do |m|
+    rollback_apps = rollback_migrations.collect do |m|
       app, _, migration = m.split("/")
       migration_number =  migration.split("_")[0].to_i - 1
-      run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} %04d --noinput --ignore-ghost-migrations" % migration_number
+      [app, migration_number]
     end
+
+    reverse_migrations = {}
+    rollback_apps.each do |app, migration|
+      if !reverse_migrations[app]
+        reverse_migrations[app] = []
+      end
+      reverse_migrations[app] << migration
+    end
+
+    reverse_migrations.each do |app, migrations|
+      run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} %04d --noinput --ignore-ghost-migrations" % migrations.min
+    end
+
   end  
 end
 
