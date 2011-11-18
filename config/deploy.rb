@@ -10,40 +10,38 @@ role :app, "root@50.57.187.102"
 role :db,  "root@50.57.187.102", :primary => true
 
 namespace :deploy do
-  task :update do
-    transaction do
-      update_code
-      symlink
-    end
-  end
 
   task :finalize_update, :except => { :no_release => true } do
     run "chmod -R g+w #{latest_release}" if fetch(:group_writable, true)
+  end
 
-    # mkdir -p is making sure that the directories are there for some SCM's that don't
-    # save empty folders
-    run <<-CMD
-      rm -rf #{latest_release}/log #{latest_release}/public/system #{latest_release}/tmp/pids &&
-      mkdir -p #{latest_release}/public &&
-      mkdir -p #{latest_release}/tmp
-    CMD
-
-    shared_children.map do |d|
-      run "ln -s #{shared_path}/#{d.split('/').last} #{latest_release}/#{d}"
-    end
-
-    if fetch(:normalize_asset_timestamps, true)
-      stamp = Time.now.utc.strftime("%Y%m%d%H%M.%S")
-      asset_paths = fetch(:public_children, %w(images stylesheets javascripts)).map { |p| "#{latest_release}/public/#{p}" }.join(" ")
-    end
-  end  
 end
-
 
 task :post_update_code do
-  run "mkdir -p virtualenvs"
-  run "virtualenv virtualenvs/#{release_name} --no-site-packages"
+  mkvirtualenv
+  installdeps
+  migrations
 end
+
+task :mkvirtualenv do
+  run "mkdir -p virtualenvs"
+  run "virtualenv virtualenvs/#{release_name} --no-site-packages"  
+end
+
+task :installdeps do
+  run "./virtualenvs/#{release_name}/bin/pip install -r #{latest_release}/requirements.txt"  
+end
+
+task :migrations do
+  run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py syncdb --noinput"
+  run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate"  
+end
+
+after 'deploy:update_code', :post_update_code
+
+
+
+#lame stuff below
 
 task :post_deploy do
   puts "\n\n\n after_deploy \n\n\n"
@@ -176,4 +174,3 @@ after 'deploy:web:disable', :post_web_disable
 after 'deploy:web:enable', :post_web_enable
 after :invoke, :post_invoke 
 after :shell, :post_shell
-
