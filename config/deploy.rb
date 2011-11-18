@@ -66,7 +66,9 @@ def rollback_migrations
     end
 
     reverse_migrations.each do |app, migrations|
-      run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} %04d --noinput --ignore-ghost-migrations" % migrations.min
+      migration_number = migrations.min
+      migration = migration_number == 0 ? 'zero' : "%04d" % migration_number
+      run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} #{migration} --noinput --ignore-ghost-migrations"
     end
 
   end  
