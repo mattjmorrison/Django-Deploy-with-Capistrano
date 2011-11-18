@@ -41,8 +41,17 @@ task :migrations do
     new_migrations = capture "find #{latest_release} -name [0-9]*.py -path */migrations/*"    
     puts "NEW MIGRATIONS: #{new_migrations}"
 
-    old_migration_list = old_migrations.split('\n')    
-    new_migration_list = new_migrations.split('\n')
+    old_migration_list = []
+    old_migrations.split('\n').each do |m|
+      m["#{previous_release}"] = ''
+      old_migration_list << m
+    end
+
+    new_migration_list = []
+    new_migrations.split('\n').each do |m|
+      m["#{latest_release}"] = ''
+      new_migration_list << m      
+    end
     
     puts (new_migration_list - old_migration_list)
 
