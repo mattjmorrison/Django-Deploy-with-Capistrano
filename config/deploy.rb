@@ -11,25 +11,36 @@ namespace :deploy do
   task :finalize_update, :except => { :no_release => true } do
     run "chmod -R g+w #{latest_release}" if fetch(:group_writable, true)
   end
+
+  task :post_update_code do
+    mkvirtualenv
+    installdeps
+    migrations
+  end
+
+  task :mkvirtualenv do
+    run "mkdir -p virtualenvs"
+    run "virtualenv virtualenvs/#{release_name} --no-site-packages"  
+  end
+
+  task :installdeps do
+    run "./virtualenvs/#{release_name}/bin/pip install -r #{latest_release}/requirements.txt"  
+  end
+
+  task :migrations do
+    on_rollback do
+      rollback_migrations    
+    end
+
+    run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py syncdb --noinput"
+    run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate --noinput --ignore-ghost-migrations"  
+    run "something that is going to be invalid goes right here!"
+  end
+  
 end
 
 after 'deploy', 'deploy:cleanup'
-after 'deploy:update_code', :post_update_code
-
-task :post_update_code do
-  mkvirtualenv
-  installdeps
-  migrations
-end
-
-task :mkvirtualenv do
-  run "mkdir -p virtualenvs"
-  run "virtualenv virtualenvs/#{release_name} --no-site-packages"  
-end
-
-task :installdeps do
-  run "./virtualenvs/#{release_name}/bin/pip install -r #{latest_release}/requirements.txt"  
-end
+after 'deploy:update_code', 'deploy:post_update_code'
 
 def get_migrations(release)
   migration_string = capture "find #{release} -name [0-9]*.py -path */migrations/*"  
@@ -43,22 +54,10 @@ def rollback_migrations
     rollback_migrations.each do |m|
       app, _, migration = m.split("/")
       migration_number =  migration.split("_")[0].to_i - 1
-      #puts "Rollback to migration '%04d' for application '#{app}'" % migration_number
       run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} %04d --noinput --ignore-ghost-migrations" % migration_number
     end
   end  
 end
-
-task :migrations do
-  on_rollback do
-    rollback_migrations    
-  end
-
-  run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py syncdb --noinput"
-  run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate --noinput --ignore-ghost-migrations"  
-  run "something that is going to be invalid goes right here!"
-end
-
 
 
 
