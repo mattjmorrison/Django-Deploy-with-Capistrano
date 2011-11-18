@@ -1,21 +1,20 @@
 set :application, "sample"
 set :repository,  "git://github.com/mattjmorrison/Django-Deploy-with-Capistrano.git"
-
 set :user, "root"
 set :deploy_to, "/#{user}/#{application}"
-
 set :scm, :git
 role :web, "root@50.57.187.102"
 role :app, "root@50.57.187.102"
 role :db,  "root@50.57.187.102", :primary => true
 
 namespace :deploy do
-
   task :finalize_update, :except => { :no_release => true } do
     run "chmod -R g+w #{latest_release}" if fetch(:group_writable, true)
   end
-
 end
+
+after 'deploy', 'deploy:cleanup'
+after 'deploy:update_code', :post_update_code
 
 task :post_update_code do
   mkvirtualenv
@@ -33,116 +32,90 @@ task :installdeps do
 end
 
 task :migrations do
+#  on_rollback do
+#  end
+
+  if previous_release
+    old_migrations = capture "find #{previous_release} -name [0-9]*.py -path */migrations/*"
+    puts "OLD MIGRATIONS: #{old_migrations}"
+    new_migrations = capture "find #{latest_release} -name [0-9]*.py -path */migrations/*"    
+    puts "NEW MIGRATIONS: #{new_migrations}"
+
+    old_migration_list = old_migrations.split('\n')    
+    new_migration_list = new_migrations.split('\n')
+    
+    puts (new_migration_list - old_migration_list)
+
+  end
+
   run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py syncdb --noinput"
-  run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate"  
+  run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate --noinput --ignore-ghost-migrations"  
 end
 
-after 'deploy:update_code', :post_update_code
+
+
+
+
+
+
+
 
 
 
 #lame stuff below
 
 task :post_deploy do
-  puts "\n\n\n after_deploy \n\n\n"
 end
-
 task :post_check do
-  puts "\n\n\n after_check \n\n\n"
 end
-
 task :post_cleanup do
-  puts "\n\n\n after_cleanup \n\n\n"
 end
-
 task :post_cold do
-  puts "\n\n\n after_cold \n\n\n"
 end
-
 task :post_finalize_update do
-  puts "\n\n\n after_finalize_update \n\n\n"
 end
-
 task :post_migrate do
-  puts "\n\n\n after_migrate \n\n\n"
 end
-
 task :post_migrations do
-  puts "\n\n\n after_migrations \n\n\n"
 end
-
 task :post_pending do
-  puts "\n\n\n after_pending \n\n\n"
 end
-
 task :post_pending_diff do
-  puts "\n\n\n after_pending_diff \n\n\n"
 end
-
 task :post_restart do
-  puts "\n\n\n after_restart \n\n\n"
 end
-
 task :post_rollback do
-  puts "\n\n\n after_rollback \n\n\n"
 end
-
 task :post_rollback_cleanup do
-  puts "\n\n\n after_rollback_cleanup \n\n\n"
 end
-
 task :post_rollback_code do
-  puts "\n\n\n after_rollback_code \n\n\n"
 end
-
 task :post_rollback_revision do
-  puts "\n\n\n after_rollback_revision \n\n\n"
 end
-
 task :post_setup do
-  puts "\n\n\n after_setup \n\n\n"
 end
-
 task :post_start do
-  puts "\n\n\n after_start \n\n\n"
 end
-
 task :post_stop do
-  puts "\n\n\n after_stop \n\n\n"
 end
-
 task :post_symlink do
-  puts "\n\n\n after_symlink \n\n\n"
 end
-
 task :post_update do
-  puts "\n\n\n after_update \n\n\n"
 end
-
 task :post_upload do
-  puts "\n\n\n after_upload \n\n\n"
 end
-
 task :post_web_disable do
-  puts "\n\n\n after_web_disable \n\n\n"
 end
-
 task :post_web_enable do
-  puts "\n\n\n after_web_enable \n\n\n"
 end
-
 task :post_invoke do
-  puts "\n\n\n after_invoke \n\n\n"
 end
-
 task :post_shell do
-  puts "\n\n\n after_shell \n\n\n"
 end
-
 
 # ordered
 after 'deploy:finalize_update', :post_finalize_update
-after 'deploy:update_code', :post_update_code
+#after 'deploy:update_code', :post_update_code
 after 'deploy:symlink', :post_symlink
 after 'deploy:update', :post_update
 after 'deploy:restart', :post_restart
