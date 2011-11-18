@@ -31,34 +31,32 @@ task :installdeps do
   run "./virtualenvs/#{release_name}/bin/pip install -r #{latest_release}/requirements.txt"  
 end
 
-task :migrations do
-#  on_rollback do
-#  end
+def get_migrations(release)
+  migration_string = capture "find #{release} -name [0-9]*.py -path */migrations/*"  
+  migration_string.split("\n").collect {|m| (m["#{release}/"] = '') && m }
+end
 
+def rollback_migrations
   if previous_release
-    old_migrations = capture "find #{previous_release} -name [0-9]*.py -path */migrations/*"
-    puts "OLD MIGRATIONS: #{old_migrations}"
-    new_migrations = capture "find #{latest_release} -name [0-9]*.py -path */migrations/*"    
-    puts "NEW MIGRATIONS: #{new_migrations}"
+    rollback_migrations = get_migrations(latest_release) - get_migrations(previous_release)
 
-    old_migration_list = []
-    old_migrations.split('\n').each do |m|
-      m["#{previous_release}"] = ''
-      old_migration_list << m
+    rollback_migrations.each do |m|
+      app, _, migration = m.split("/")
+      migration_number =  migration.split("_")[0].to_i - 1
+      #puts "Rollback to migration '%04d' for application '#{app}'" % migration_number
+      run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} %04d --noinput --ignore-ghost-migrations" % migration_number
     end
+  end  
+end
 
-    new_migration_list = []
-    new_migrations.split('\n').each do |m|
-      m["#{latest_release}"] = ''
-      new_migration_list << m      
-    end
-    
-    puts (new_migration_list - old_migration_list)
-
+task :migrations do
+  on_rollback do
+    rollback_migrations    
   end
 
   run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py syncdb --noinput"
   run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate --noinput --ignore-ghost-migrations"  
+  run "something that is going to be invalid goes right here!"
 end
 
 
