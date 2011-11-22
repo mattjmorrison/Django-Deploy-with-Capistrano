@@ -3,9 +3,10 @@ set :repository,  "git://github.com/mattjmorrison/Django-Deploy-with-Capistrano.
 set :user, "root"
 set :deploy_to, "/#{user}/#{application}"
 set :scm, :git
-role :web, "root@50.57.187.102"
-role :app, "root@50.57.187.102"
-role :db,  "root@50.57.187.102", :primary => true
+
+role :web, "root@50.57.191.43"
+role :app, "root@50.57.191.43"
+role :db,  "root@50.57.191.43", :primary => true
 
 namespace :deploy do
   task :finalize_update, :except => { :no_release => true } do
@@ -34,7 +35,7 @@ namespace :deploy do
 
     run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py syncdb --noinput"
     run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate --noinput --ignore-ghost-migrations"  
-    run "something that is going to be invalid goes right here!"
+    #run "something that is going to be invalid goes right here!"
   end
   
 end
@@ -57,27 +58,20 @@ def rollback_migrations
       [app, migration_number]
     end
 
-    reverse_migrations = {}
-    rollback_apps.each do |app, migration|
-      if !reverse_migrations[app]
-        reverse_migrations[app] = []
-      end
-      reverse_migrations[app] << migration
-    end
+    reverse_migrations = rollback_apps.group_by &:first
 
     reverse_migrations.each do |app, migrations|
       migration_number = migrations.min
       migration = migration_number == 0 ? 'zero' : "%04d" % migration_number
-      run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} #{migration} --noinput --ignore-ghost-migrations"
+      puts "#{app} #{migration}"
+      #run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate #{app} #{migration} --noinput --ignore-ghost-migrations"
     end
 
   end  
 end
 
 
-
-
-
+# asdf3f6DqBRt1
 
 
 
