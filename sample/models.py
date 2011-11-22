@@ -5,3 +5,4 @@ class Person(models.Model):
     alias = models.CharField(max_length=50)
     last_name = models.CharField(max_length=100)
     something = models.IntegerField()
+    something_else = models.IntegerField()

@@ -45,29 +45,18 @@ after 'deploy:update_code', 'deploy:post_update_code'
 
 def get_migrations(release)
   migration_string = capture "find #{release} -name [0-9]*.py -path */migrations/*"  
-  x = migration_string.split("\n").collect {|m| (m["#{release}/"] = '') && m }
-
-  p x
-
-  x
+  migration_string.split("\n").collect {|m| (m["#{release}/"] = '') && m }
 end
 
 def rollback_migrations
   if previous_release
-    puts "Previous Release"
     rollback_migrations = get_migrations(latest_release) - get_migrations(previous_release)
 
-    p rollback_migrations
 
-    rollback_apps = rollback_migrations.collect do |m|
+    reverse_migrations = rollback_migrations.each_with_object(Hash.new {|h, k| h[k] = []}) do |m, hsh|
       app, _, migration = m.split("/")
-      migration_number =  migration.split("_")[0].to_i - 1
-      [app, migration_number]
+      hsh[app] << migration.split("_")[0].to_i - 1
     end
-
-    p rollback_apps
-
-    reverse_migrations = rollback_apps.group_by &:first
 
     p reverse_migrations
 
