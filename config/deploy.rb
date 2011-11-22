@@ -35,7 +35,7 @@ namespace :deploy do
 
     run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py syncdb --noinput"
     run "./virtualenvs/#{release_name}/bin/python #{latest_release}/manage.py migrate --noinput --ignore-ghost-migrations"  
-    #run "something that is going to be invalid goes right here!"
+    run "something that is going to be invalid goes right here!"
   end
   
 end
@@ -45,12 +45,19 @@ after 'deploy:update_code', 'deploy:post_update_code'
 
 def get_migrations(release)
   migration_string = capture "find #{release} -name [0-9]*.py -path */migrations/*"  
-  migration_string.split("\n").collect {|m| (m["#{release}/"] = '') && m }
+  x = migration_string.split("\n").collect {|m| (m["#{release}/"] = '') && m }
+
+  p x
+
+  x
 end
 
 def rollback_migrations
   if previous_release
+    puts "Previous Release"
     rollback_migrations = get_migrations(latest_release) - get_migrations(previous_release)
+
+    p rollback_migrations
 
     rollback_apps = rollback_migrations.collect do |m|
       app, _, migration = m.split("/")
@@ -58,7 +65,11 @@ def rollback_migrations
       [app, migration_number]
     end
 
+    p rollback_apps
+
     reverse_migrations = rollback_apps.group_by &:first
+
+    p reverse_migrations
 
     reverse_migrations.each do |app, migrations|
       migration_number = migrations.min
