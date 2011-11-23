@@ -1,5 +1,3 @@
 {
-	"run_list": [ 
-		"role[web_server]"
-	]
+	"run_list": [ "main" ]
 }

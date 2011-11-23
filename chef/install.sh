@@ -1,7 +1,5 @@
 #!/bin/bash
 
-json="${1}"
-
 logfile="/root/chef-solo.log"
 
 # This runs as root on the server
@@ -46,4 +44,4 @@ fi
 # Run chef-solo on server
 echo "Run $chef_binary"
 [[ -s "/usr/local/rvm/scripts/rvm" ]] && source "/usr/local/rvm/scripts/rvm"
-"$chef_binary" --config solo.rb --json-attributes "$json"
+"$chef_binary" --config solo.rb
