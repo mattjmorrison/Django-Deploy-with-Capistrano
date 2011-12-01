@@ -1,0 +1,35 @@
+{
+    "run_list": [
+        "main",
+        "main::users",
+        "main::apache"
+    ],
+    "base_packages": [
+        "git-core",
+        "build-essential",
+        "python-setuptools",
+        "python-dev"
+    ],
+    "easy_install_packages": [
+        "pip"
+    ],
+    "pip_packages": [
+        "virtualenv"
+    ]
+}
+/*
+    "users": {
+        "mattjmorrison": {
+            "id": 1001,
+            "full_name": "Matthew J. Morrison",
+            "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAxfyp7EWNLOYfV1qv8rI7Hrh3JuKwbba0aNEUxdXC79GMONoU/Yde3dQp8kHvPPaTue1tu0qJDpIZecWPOrjsBRshCGeGEicuTcLmnibwwvofPb9KZl0k/hHy1IzlvYeoA/3LXCDSnlrh5vLYDZorcRXzN817zeHxV2h2ltuM9tNO6QO+SfYGoxuctgjg9kmLDTzTGUTfLoka+cRPghSty+B7YrNI/F4eNCknU+afNffuJp03F0w4S9nkSpGACSHp+VGtCP2kDgTRjs+kcRrfWZ1pzFPBGnmOX0VIf9lfoljBM9aSFv91I8OHiak9IUNS0hI54rO7VD7nz7jDU1qyQw=="
+        }
+    },
+    "groups": {
+        "data": {
+            "gid": 201,
+            "members": ["mattjmorrison"]
+        }
+    }
+}
+*/
